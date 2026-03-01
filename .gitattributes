@@ -1,4 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-Para-Site-Installation.toe filter=lfs diff=lfs merge=lfs -text
-toxes/MediaPipe/MediaPipe.tox filter=lfs diff=lfs merge=lfs -text
+# Large TouchDesigner component (MediaPipe only)
+TouchDesigner/toxes/MediaPipe/MediaPipe.tox filter=lfs diff=lfs merge=lfs -text
