@@ -7,3 +7,4 @@ Backup
 *.mov
 *.wav
 .DS_Store
+*.tmp

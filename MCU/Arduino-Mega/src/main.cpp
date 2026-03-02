@@ -13,14 +13,19 @@
 #define NUM_RELAYS 8
 #define NUM_DIMMERS 8
 
-// Mega: D2 = zero-cross (fixed). D3-D10 = dimmer outputs. 22,24,...,36 = relays.
-// UNO: RELAY_PINS {7,8,9,10}, DIMMER_PINS {3,4,5,6}, NUM_RELAYS 4, NUM_DIMMERS 4.
-const int RELAY_PINS[] = {22, 24, 26, 28, 30, 32, 34, 36};
-const int DIMMER_PINS[] = {3, 4, 5, 6, 7, 8, 9, 10};
+// Mega: D21 = zero-cross (INT0). D54-D61 = relays. D4-D11 = dimmers.
+// UNO: ZERO_CROSS_PIN 2 (INT0), RELAY_PINS {7,8,9,10}, DIMMER_PINS {3,4,5,6}, NUM_RELAYS 4, NUM_DIMMERS 4.
+const int RELAY_PINS[] = {54, 55, 56, 57, 58, 59, 60, 61};
+// dimmer0→D11, dimmer1→D10, dimmer2→D9, dimmer3→D8, dimmer4→D7, dimmer5→D6, dimmer6→D5, dimmer7→D4
+const int DIMMER_PINS[] = {11, 10, 9, 8, 7, 6, 5, 4};
 
-#define ZERO_CROSS_PIN 2
+#if defined(ARDUINO_AVR_MEGA2560)
+#define ZERO_CROSS_PIN 21   // Mega: INT0 is on D21 (see Arduino Mega 2560 pinout)
+#else
+#define ZERO_CROSS_PIN 2    // UNO etc.: INT0 is on D2
+#endif
 
-// --- RBDDimmer: one per channel. AVR (Mega/UNO): ZC fixed D2. ESP32/ESP8266: pass ZC. ---
+// --- RBDDimmer: one per channel. AVR: ZC must be an interrupt pin (Mega INT0=D21, UNO INT0=D2). ESP32/ESP8266: pass ZC. ---
 #if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_SAMD)
 dimmerLamp dimmer0(DIMMER_PINS[0]);
 dimmerLamp dimmer1(DIMMER_PINS[1]);
