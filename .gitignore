@@ -8,3 +8,4 @@ Backup
 *.wav
 .DS_Store
 *.tmp
+captures/
