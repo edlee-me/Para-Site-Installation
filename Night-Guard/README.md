@@ -17,3 +17,4 @@ This Python-based system acts as a phantom "Night Guard." It continuously monito
 Ensure the Mac Mini is running Python 3.10+ and install the required official Google GenAI SDK:
 ```bash
 pip install google-genai pillow
+```

@@ -9,3 +9,8 @@ Backup
 .DS_Store
 *.tmp
 captures/
+.venv/
+.env
+# Night-Guard-TD: keep API key out of git
+Night-Guard-TD/api_key.txt
+Night-Guard-TD/.api_key
