@@ -60,7 +60,7 @@ subprocess.Popen([python_exe, night_guard_script, path, '--print', 'Printer_POS_
 
 Optional: set `project.paths['nightguard']` to this folder and use `tdu.expandPath('nightguard://')` plus `os.path.join(..., 'night_guard.py')` instead of a hardcoded path.
 
-**If the script doesn’t run from TouchDesigner:** use **absolute paths** and a fixed project root instead of `project.folder` (which can be wrong). Copy the callback from `TouchDesigner/timer_capture_onDone_reference.py` into your Timer CHOP Execute DAT’s `onDone`. It sets `PROJECT_ROOT` to a full path and writes each run to `Night-Guard-TD/td_nightguard_log.txt` so you can confirm the command. Run that same command in Terminal to see any Python/API errors.
+**If the script doesn’t run from TouchDesigner:** use **absolute paths** and a fixed project root instead of `project.folder` (which can be wrong). Copy the callback from `TouchDesigner/timer_capture_onDone_reference.py` into your Timer CHOP Execute DAT’s `onDone`. It redirects the child process stdout/stderr to `Night-Guard-TD/td_nightguard_log.txt`, so all `print()` and errors from `night_guard.py` appear there (TouchDesigner has no console for the child). Do **not** use `shell=True`; keep the list form and `cwd=PROJECT_ROOT`. Do **not** use `stdout=subprocess.PIPE` unless you read from it—that hides output.
 
 ## CLI (no TouchDesigner)
 

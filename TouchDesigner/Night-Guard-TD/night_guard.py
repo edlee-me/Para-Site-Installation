@@ -4,6 +4,7 @@ from PIL import Image
 import time
 import sys
 import os
+import re
 import argparse
 import subprocess
 
@@ -68,6 +69,13 @@ def simulate_thermal_printer(text, log_path, print_to_printer=None):
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(text + "\n\n")
 
+    # 將此則 log 文字單獨存成一個檔案（一個 capture 一個檔）
+    logs_dir = os.path.join(SCRIPT_DIR, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    single_path = os.path.join(logs_dir, "entry_{}.txt".format(int(time.time() * 1000)))
+    with open(single_path, "w", encoding="utf-8") as f:
+        f.write(text)
+
     # 可選：將文字送到實體熱敏印表機 (macOS lp)
     if print_to_printer:
         try:
@@ -128,11 +136,17 @@ def main(image_path, api_key=None, print_to_printer=None):
         return
 
     print("系統運作中，正在分析監控畫面...")
-    
+
+    # 真實時間，供 log 標頭使用
+    real_log_header = "[LOG ENTRY: {} / TIME: {}]".format(
+        time.strftime("%Y-%m-%d"), time.strftime("%H:%M")
+    )
+    user_message = "Please generate a system log based on this CCTV feed. Use this exact line as the first log line: " + real_log_header
+
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=["Please generate a system log based on this CCTV feed.", cctv_image],
+            contents=[user_message, cctv_image],
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=1.5,
@@ -146,6 +160,13 @@ def main(image_path, api_key=None, print_to_printer=None):
         raise
 
     clean_text = response.text.strip()
+    # 將輸出中的 [LOG ENTRY: ... / TIME: ...] 替換為真實時間
+    clean_text = re.sub(
+        r'\[LOG ENTRY:\s*[^\]]+?\]',
+        real_log_header,
+        clean_text,
+        count=1,
+    )
     log_path = os.path.join(SCRIPT_DIR, "exhibition_archive_log.txt")
     simulate_thermal_printer(clean_text, log_path, print_to_printer=print_to_printer)
 
