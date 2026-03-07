@@ -10,10 +10,11 @@ Same logic as Night-Guard: interprets a CCTV-style image with the Gemini API and
 
 ## File structure
 
-- `night_guard.py` – main script (CLI + script-dir paths)
+- `night_guard.py` – main script (CLI + script-dir paths; can write PDF from the log text if reportlab is installed)
 - `keywords.txt` – vocabulary bank
 - `examples.txt` – few-shot style examples
 - `exhibition_archive_log.txt` – created at runtime; logs appended here
+- `logs/` – one `entry_<timestamp>.txt` and one `entry_<timestamp>.pdf` per run (PDF optional, needs reportlab)
 
 ## API key (keep it out of git)
 
@@ -37,11 +38,13 @@ If no key is set, the script exits with a clear error.
 
 ## Setup
 
-The project has a venv at **`../.venv/`** with `google-genai` and `pillow` already installed. **Use that Python** when running the script (see CLI below). To recreate the venv:
+The project has a venv at **`TouchDesigner/.venv/`** with `google-genai`, `pillow`, and `reportlab` installed. **Use that Python** when running the script (see CLI below). To recreate the venv:
 
 ```bash
-cd /path/to/Para-Site-Installation && python3 -m venv .venv && .venv/bin/pip install google-genai pillow
+cd /path/to/Para-Site-Installation/TouchDesigner && python3 -m venv .venv && .venv/bin/pip install google-genai pillow reportlab
 ```
+
+**PDF output:** Each log is also saved as a PDF (same text, A4). reportlab is installed in `TouchDesigner/.venv`. If it were missing, the script would still write `.txt` only.
 
 ## TouchDesigner: run after each capture
 
@@ -50,7 +53,7 @@ Use the **system Python** (or your venv) that has `google-genai` and `pillow`. I
 ```python
 import subprocess
 night_guard_script = '/Users/ed/Documents/Projects/Para-Site/Para-Site-Installation/Night-Guard-TD/night_guard.py'
-python_exe = '/Users/ed/Documents/Projects/Para-Site/Para-Site-Installation/.venv/bin/python'  # project venv (recommended)
+python_exe = '/Users/ed/Documents/Projects/Para-Site/Para-Site-Installation/TouchDesigner/.venv/bin/python'  # TouchDesigner venv
 subprocess.Popen([python_exe, night_guard_script, path, '--print', 'Printer_POS_80'])
 ```
 
@@ -64,19 +67,37 @@ Optional: set `project.paths['nightguard']` to this folder and use `tdu.expandPa
 
 ## CLI (no TouchDesigner)
 
-**Use the project venv** so `google-genai` and `pillow` are found (plain `python3` will give `ModuleNotFoundError`):
+**Use the TouchDesigner venv** so `google-genai` and `pillow` are found (plain `python3` will give `ModuleNotFoundError`):
 
 ```bash
 cd /path/to/Para-Site-Installation
-.venv/bin/python Night-Guard-TD/night_guard.py '/path/to/capture.png'
-.venv/bin/python Night-Guard-TD/night_guard.py '/path/to/capture.png' --print Printer_POS_80
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py '/path/to/capture.png'
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py '/path/to/capture.png' --print Printer_POS_80
 ```
 
 Example with your image:
 
 ```bash
 cd /Users/ed/Documents/Projects/Para-Site/Para-Site-Installation
-.venv/bin/python Night-Guard-TD/night_guard.py '/Users/ed/Documents/Projects/Para-Site/Para-Site-Installation/Night-Guard/Screenshot 2026-02-27 at 14.38.26.png'
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py '/path/to/capture.png'
 ```
 
 Logs are appended to `exhibition_archive_log.txt` in the `Night-Guard-TD` folder.
+
+### Create a PDF from any log file
+
+To turn an existing log `.txt` file into a PDF (same path, `.pdf` extension), use `--pdf-only`. Requires `reportlab` in the venv.
+
+```bash
+cd /path/to/Para-Site-Installation
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py --pdf-only TouchDesigner/Night-Guard-TD/logs/entry_1772813814265.txt
+```
+
+Output: `TouchDesigner/Night-Guard-TD/logs/entry_1772813814265.pdf`
+
+**Create PDF and print on EPSON_LQ_635K (fit-to-page, A4, 360dpi):**
+
+```bash
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py '/path/to/capture.png' --print-epson
+TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/night_guard.py --pdf-only path/to/log.txt --print-epson
+```

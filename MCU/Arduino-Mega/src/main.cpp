@@ -17,12 +17,12 @@
 // UNO: RELAY_PINS {7,8,9,10}, DIMMER_PINS {3,4,5,6}, zero-cross D2.
 const int RELAY_PINS[] = {54, 55, 56, 57, 58, 59, 60, 61};
 // dimmer0→D12, dimmer1→D11, dimmer2→D10, dimmer3→D9, dimmer4→D8, dimmer5→D7, dimmer6→D6, dimmer7→D5
-const int DIMMER_PINS[] = {12, 11, 10, 9, 8, 7, 6, 5};
+const int DIMMER_PINS[] = {12, 11, 10, 9, 7, 6, 5, 4};
  
  #if defined(ARDUINO_AVR_MEGA2560) || defined(__AVR_ATmega2560__)
- #define ZERO_CROSS_PIN 2   // Mega: any interrupt pin (2,3,18,19,20,21). D2 matches examples.
+ #define ZERO_CROSS_PIN 21   // Mega: any interrupt pin (2,3,18,19,20,21). D2 matches examples.
  #else
- #define ZERO_CROSS_PIN 2   // UNO etc.
+ #define ZERO_CROSS_PIN 21   // UNO etc.
  #endif
  
  // Dimmable Light: one instance per output pin; brightness 0–255.
