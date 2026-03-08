@@ -1,0 +1,5 @@
+# Night-Guard-TD / night_guard.py
+# Install into TouchDesigner/.venv (see SETUP_NEW_MAC.md)
+google-genai
+pillow
+reportlab
