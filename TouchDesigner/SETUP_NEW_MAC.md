@@ -5,11 +5,11 @@ Use these steps when moving the project to a new machine (or setting it up from 
 ## 1. Prerequisites
 
 - **macOS** (the project uses `lp` for printing; same steps apply on other Unix if you have Python 3 and CUPS).
-- **Python 3** (3.10 or 3.11 recommended). Check:
+- **Python 3** (3.10 or 3.11 recommended). On macOS, `python3` often stays at the system version (e.g. 3.9); use the version you installed explicitly:
   ```bash
-  python3 --version
+  python3.11 --version   # if you installed 3.11 from python.org or Homebrew
   ```
-  If needed, install from [python.org](https://www.python.org/downloads/) or Homebrew: `brew install python@3.11`.
+  If needed, install from [python.org](https://www.python.org/downloads/) or Homebrew: `brew install python@3.11`. The new version is usually available as `python3.11`, not as `python` or `python3`.
 - **TouchDesigner** installed (if you use the TD integration).
 - **Gemini API key** (for Night Guard).
 
@@ -27,19 +27,18 @@ Paths in TouchDesigner callbacks and docs use this project root; adjust if your 
 
 The app expects a venv at **`TouchDesigner/.venv`** and uses its Python to run `night_guard.py`.
 
-From the **project root** (parent of `TouchDesigner`):
+From the **project root** (parent of `TouchDesigner`). Use **the same Python you want in the venv** (e.g. 3.11). On macOS, `python3` may still be 3.9; use `python3.11` if you installed 3.11:
 
 ```bash
 cd /path/to/Para-Site-Installation/TouchDesigner
-python3 -m venv .venv
+python3.11 -m venv .venv
 .venv/bin/pip install --upgrade pip
 .venv/bin/pip install -r Night-Guard-TD/requirements.txt
 ```
 
-Or install packages explicitly:
+If you don’t have `python3.11` in PATH, use the full path (e.g. from python.org: `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3`, or Homebrew: `/opt/homebrew/bin/python3.11`). Or use `python3` if it already reports 3.10+:
 
 ```bash
-cd /path/to/Para-Site-Installation/TouchDesigner
 python3 -m venv .venv
 .venv/bin/pip install google-genai pillow reportlab
 ```
