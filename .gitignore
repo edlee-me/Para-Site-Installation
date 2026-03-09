@@ -3,9 +3,14 @@ Backup
 *.*.toe
 *.MP4
 *.mp4
+*.m4a
 *.MOV
 *.mov
 *.wav
+*.jpg
+*.png
+*.jpeg
+*.JPG
 .DS_Store
 *.tmp
 captures/
