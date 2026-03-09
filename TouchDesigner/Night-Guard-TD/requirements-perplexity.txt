@@ -1,0 +1,4 @@
+# For night_guard_perplexity.py. Install into TouchDesigner/.venv.
+perplexityai
+pillow
+reportlab

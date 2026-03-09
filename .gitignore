@@ -19,5 +19,6 @@ captures/
 # Night-Guard-TD: keep API key out of git
 */Night-Guard-TD/api_key.txt
 */Night-Guard-TD/.api_key
+*/Night-Guard-TD/perplexity_api_key.txt
 */Night-Guard-TD/td_nightguard_log.txt
 */Night-Guard-TD/logs/

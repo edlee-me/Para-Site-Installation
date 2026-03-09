@@ -2,7 +2,7 @@
 
 This folder is the **TouchDesigner-ready** version of the Night Guard system. The original, standalone version is in **`../Night-Guard/`** (backup).
 
-Same logic as Night-Guard: interprets a CCTV-style image with the Gemini API and outputs a "phantom night guard" system log. This build adds:
+Same logic as Night-Guard: interprets a CCTV-style image with the Gemini API and outputs a "phantom night guard" system log. **If Gemini is unavailable (e.g. in Hong Kong), use Perplexity:** see **`night_guard_perplexity.py`** and **`SETUP_PERPLEXITY.md`**. This build adds:
 
 - **CLI:** pass the image path as first argument (e.g. from TouchDesigner after capture).
 - **Paths:** `keywords.txt`, `examples.txt`, and `exhibition_archive_log.txt` are resolved from this folder, so it runs correctly when launched from any working directory.
