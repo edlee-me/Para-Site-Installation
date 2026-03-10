@@ -175,8 +175,6 @@ def simulate_thermal_printer(
     print("\n" + "=" * 40)
     print("🖨️  列印完成。")
     print("=" * 40 + "\n")
-    with open(log_path, "a", encoding="utf-8") as f:
-        f.write(text + "\n\n")
     logs_dir = os.path.join(SCRIPT_DIR, "logs")
     os.makedirs(logs_dir, exist_ok=True)
     ts = int(time.time() * 1000)
@@ -198,12 +196,25 @@ def simulate_thermal_printer(
                     tmp_path = tf.name
                 subprocess.Popen(["lp", "-d", print_to_printer, tmp_path])
         except Exception as e:
-            print(f"實體列印失敗: {e}")
+            msg = "實體列印失敗: {}".format(e)
+            print(msg)
+            _log_error(log_path, msg)
     if print_epson and os.path.isfile(single_pdf):
         try:
             _lp_epson_pdf(single_pdf, orientation=print_epson_orientation, media="A4", resolution="360dpi")
         except Exception as e:
-            print(f"EPSON 列印失敗: {e}")
+            msg = "EPSON 列印失敗: {}".format(e)
+            print(msg)
+            _log_error(log_path, msg)
+
+
+def _log_error(log_path, message):
+    """Append a timestamped error line to the log file."""
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write("[{}] ERROR: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), message))
+    except Exception:
+        pass
 
 
 def _normalize_key(key):
@@ -246,12 +257,15 @@ def main(
     print_epson_orientation="portrait",
     pdf_font_path=None,
 ):
+    log_path = os.path.join(SCRIPT_DIR, "exhibition_archive_log.txt")
     key = _resolve_api_key(api_key)
     if not key:
-        print(
-            "Error: No Perplexity API key. Set PERPLEXITY_API_KEY, use --api-key, "
+        msg = (
+            "No Perplexity API key. Set PERPLEXITY_API_KEY, use --api-key, "
             "or create Night-Guard-TD/perplexity_api_key.txt (see SETUP_PERPLEXITY.md)."
         )
+        print("Error:", msg)
+        _log_error(log_path, msg)
         sys.exit(1)
 
     # Vision-capable model on Agent API (see https://docs.perplexity.ai/docs/agent-api/models)
@@ -266,7 +280,9 @@ def main(
         with open(image_path, "rb") as f:
             image_data = f.read()
     except FileNotFoundError:
-        print(f"找不到圖片：{image_path}，請確認檔名與路徑。")
+        msg = "找不到圖片：{}，請確認檔名與路徑。".format(image_path)
+        print(msg)
+        _log_error(log_path, msg)
         return
 
     print("系統運作中，正在分析監控畫面 (Perplexity)...")
@@ -304,6 +320,7 @@ def main(
             max_output_tokens=2048,
         )
     except Exception as e:
+        _log_error(log_path, str(e))
         err = str(e).lower()
         if "401" in err or "403" in err or "api" in err or "key" in err:
             print("Perplexity API key rejected. Get a key at https://www.perplexity.ai/settings/api")
@@ -326,7 +343,6 @@ def main(
         raw_text,
         count=1,
     )
-    log_path = os.path.join(SCRIPT_DIR, "exhibition_archive_log.txt")
     simulate_thermal_printer(
         clean_text,
         log_path,
