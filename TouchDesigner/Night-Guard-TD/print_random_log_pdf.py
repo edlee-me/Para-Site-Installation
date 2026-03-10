@@ -18,12 +18,14 @@ def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360d
         "-o", "fit-to-page", "-o", "media={}".format(media),
     ]
     if resolution:
-        opts.extend(["-o", "Resolution={}".format(resolution)])
-    if orientation and orientation.lower() == "landscape":
-        opts.extend(["-o", "landscape"])
+        opts.extend(["-o", "resolution={}".format(resolution)])
+    # if orientation and orientation.lower() == "landscape":
+    #     opts.extend(["-o", "landscape"])
     else:
         opts.extend(["-o", "portrait"])
     opts.append(pdf_path)
+    print(opts)
+    # return
     subprocess.Popen(opts)
 
 
