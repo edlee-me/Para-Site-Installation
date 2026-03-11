@@ -123,9 +123,10 @@ def main():
         print("Error: logs directory not found: {}".format(logs_dir), file=sys.stderr)
         return 1
 
-    pdfs = [f for f in os.listdir(logs_dir) if f.lower().endswith(".pdf")]
+    # Only pick from log-entry PDFs (entry_*.pdf), not rule_*.pdf or others
+    pdfs = [f for f in os.listdir(logs_dir) if f.lower().endswith(".pdf") and f.startswith("entry_")]
     if not pdfs:
-        print("Error: no PDF files in {}".format(logs_dir), file=sys.stderr)
+        print("Error: no entry_*.pdf files in {}".format(logs_dir), file=sys.stderr)
         return 1
 
     chosen = random.choice(pdfs)
