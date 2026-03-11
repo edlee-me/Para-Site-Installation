@@ -56,7 +56,7 @@ def _rotate_pdf_180(pdf_path, output_path=None):
         return None
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", resolution="360dpi", printer="EPSON_LQ_635K"):
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", resolution="360dpi", printer="EPSON_LQ_635K", wait=False):
     opts = [
         "lp", "-d", printer,
         "-o", "fit-to-page", "-o", "media=Custom.241x80mm",
@@ -68,9 +68,10 @@ def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", res
     else:
         opts.extend(["-o", "portrait"])
     opts.append(pdf_path)
-    print(opts)
-    # return
-    subprocess.Popen(opts)
+    if wait:
+        subprocess.run(opts, check=False)
+    else:
+        subprocess.Popen(opts)
 
 
 def main():
@@ -147,12 +148,14 @@ def main():
 
     if args.print_epson:
         try:
+            # When printing a temp (rotated) file, wait for lp to finish so we don't delete it before lp reads it
             _lp_epson_pdf(
                 to_print,
                 orientation=args.orientation,
                 media=args.media,
                 resolution="360dpi",
                 printer=args.printer,
+                wait=(temp_rotated is not None),
             )
             print("Printing: {}".format(chosen))
         except Exception as e:
