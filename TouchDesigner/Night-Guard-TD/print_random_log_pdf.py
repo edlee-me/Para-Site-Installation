@@ -13,6 +13,9 @@ import subprocess
 import sys
 import tempfile
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_LOGS_DIR = os.path.join(SCRIPT_DIR, "logs")
+
 
 def _rotate_pdf_180(pdf_path, output_path=None):
     """Rotate all pages of a PDF 180 degrees. Requires pypdf.
@@ -74,8 +77,8 @@ def main():
     parser = argparse.ArgumentParser(description="Pick a random PDF from logs and print it.")
     parser.add_argument(
         "--logs-dir",
-        default=None,
-        help="Folder containing entry_*.pdf files. Default: logs/ next to this script.",
+        default=DEFAULT_LOGS_DIR,
+        help="Folder containing entry_*.pdf files. Default: Night-Guard-TD/logs.",
     )
     parser.add_argument(
         "--print-epson",
@@ -113,8 +116,7 @@ def main():
     )
     args = parser.parse_args()
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    logs_dir = os.path.abspath(args.logs_dir) if args.logs_dir else os.path.join(script_dir, "logs")
+    logs_dir = os.path.abspath(args.logs_dir)
 
     if not os.path.isdir(logs_dir):
         print("Error: logs directory not found: {}".format(logs_dir), file=sys.stderr)
