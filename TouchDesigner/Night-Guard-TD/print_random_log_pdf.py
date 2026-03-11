@@ -12,10 +12,10 @@ import subprocess
 import sys
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi", printer="EPSON_LQ_635K"):
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", resolution="360dpi", printer="EPSON_LQ_635K"):
     opts = [
         "lp", "-d", printer,
-        "-o", "fit-to-page", "-o", "media={}".format(media),
+        "-o", "fit-to-page", "-o", "media=Custom.241x80mm",
     ]
     if resolution:
         opts.extend(["-o", "resolution={}".format(resolution)])
