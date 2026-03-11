@@ -8,13 +8,15 @@ Ref: https://docs.perplexity.ai/docs/getting-started/overview
      https://docs.perplexity.ai/docs/agent-api/image-attachments
 """
 
+import argparse
 import base64
 import os
 import re
-import sys
-import time
-import argparse
+import shutil
 import subprocess
+import sys
+import tempfile
+import time
 
 # Perplexity: pip install perplexityai (must run with the project venv Python)
 try:
@@ -105,7 +107,7 @@ def _wrap_text_after_humidity(text, max_chars=70):
     return "\n".join(header) + "\n" + "\n".join(body_lines)
 
 
-def _text_to_pdf(text, pdf_path, font_path=None):
+def _text_to_pdf(text, pdf_path, font_path=None, rotate_180=False):
     try:
         from reportlab.lib.units import mm
         from reportlab.platypus import SimpleDocTemplate, Paragraph
@@ -116,14 +118,14 @@ def _text_to_pdf(text, pdf_path, font_path=None):
         print("PDF not created: install reportlab (pip install reportlab)")
         return
     page_w, page_h = 240 * mm, 80 * mm
-    margin = 5 * mm
+    side_margin = 32 * mm
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=(page_w, page_h),
-        rightMargin=margin,
-        leftMargin=margin,
-        topMargin=margin,
-        bottomMargin=margin,
+        rightMargin=0,
+        leftMargin=side_margin,
+        topMargin=0,
+        bottomMargin=0,
     )
     styles = getSampleStyleSheet()
     style = styles["Normal"]
@@ -139,9 +141,41 @@ def _text_to_pdf(text, pdf_path, font_path=None):
             print("Custom font failed ({}), using default: {}".format(font_path, e))
     paragraph = Paragraph(text.replace("\n", "<br/>"), style)
     doc.build([paragraph])
+    if rotate_180 and os.path.isfile(pdf_path):
+        _rotate_pdf_180(pdf_path)
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi"):
+def _rotate_pdf_180(pdf_path):
+    """Rotate all pages of a PDF 180 degrees in place. Requires pypdf."""
+    try:
+        from pypdf import PdfReader, PdfWriter
+    except ImportError:
+        print("Rotation skipped: install pypdf (pip install pypdf)")
+        return
+    try:
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+            writer.pages[-1].rotate(180)
+        # Write to temp file then replace, so we never read/write the same path at once
+        fd, temp_path = tempfile.mkstemp(suffix=".pdf")
+        try:
+            os.close(fd)
+            with open(temp_path, "wb") as f:
+                writer.write(f)
+            shutil.copy2(temp_path, pdf_path)
+        finally:
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+        print("PDF rotated 180°: {}".format(pdf_path))
+    except Exception as e:
+        print("PDF rotation failed: {}".format(e))
+
+
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi", rotate_180=False):
     opts = [
         "lp", "-d", "EPSON_LQ_635K",
         "-o", "fit-to-page", "-o", "media={}".format(media),
@@ -152,6 +186,8 @@ def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360d
         opts.extend(["-o", "landscape"])
     else:
         opts.extend(["-o", "portrait"])
+    if rotate_180:
+        opts.extend(["-o", "orientation-requested=6"])  # CUPS: 6 = reverse portrait (180 degrees)
     opts.append(pdf_path)
     subprocess.Popen(opts)
 
@@ -162,6 +198,7 @@ def simulate_thermal_printer(
     print_to_printer=None,
     print_epson=False,
     print_epson_orientation="portrait",
+    print_epson_rotate_180=False,
     pdf_font_path=None,
 ):
     text = _wrap_text_after_humidity(text, max_chars=70)
@@ -182,7 +219,7 @@ def simulate_thermal_printer(
     with open(single_txt, "w", encoding="utf-8") as f:
         f.write(text)
     single_pdf = os.path.join(logs_dir, "entry_{}.pdf".format(ts))
-    _text_to_pdf(text, single_pdf, font_path=pdf_font_path)
+    _text_to_pdf(text, single_pdf, font_path=pdf_font_path, rotate_180=print_epson_rotate_180)
     if print_to_printer:
         try:
             if os.path.isfile(single_pdf):
@@ -201,7 +238,13 @@ def simulate_thermal_printer(
             _log_error(log_path, msg)
     if print_epson and os.path.isfile(single_pdf):
         try:
-            _lp_epson_pdf(single_pdf, orientation=print_epson_orientation, media="A4", resolution="360dpi")
+            _lp_epson_pdf(
+                single_pdf,
+                orientation=print_epson_orientation,
+                media="A4",
+                resolution="360dpi",
+                rotate_180=False,
+            )
         except Exception as e:
             msg = "EPSON 列印失敗: {}".format(e)
             print(msg)
@@ -255,6 +298,7 @@ def main(
     print_to_printer=None,
     print_epson=False,
     print_epson_orientation="portrait",
+    print_epson_rotate_180=False,
     pdf_font_path=None,
 ):
     log_path = os.path.join(SCRIPT_DIR, "exhibition_archive_log.txt")
@@ -349,6 +393,7 @@ def main(
         print_to_printer=print_to_printer,
         print_epson=print_epson,
         print_epson_orientation=print_epson_orientation,
+        print_epson_rotate_180=print_epson_rotate_180,
         pdf_font_path=pdf_font_path,
     )
 
@@ -368,9 +413,47 @@ if __name__ == "__main__":
         default="portrait",
         help="Print orientation for Epson.",
     )
+    parser.add_argument(
+        "--print-epson-rotate-180",
+        action="store_true",
+        help="Rotate Epson print 180 degrees (upside down).",
+    )
     parser.add_argument("--font", metavar="PATH", default=None, help="Path to .ttf/.otf for PDF.")
     parser.add_argument("--pdf-only", metavar="LOG_FILE", help="Create PDF from existing log file (no API call).")
+    parser.add_argument("--print-pdf", metavar="PDF_FILE", help="Print an existing PDF (use with --print-epson and optionally --print-epson-rotate-180).")
     args = parser.parse_args()
+
+    if args.print_pdf:
+        pdf_file = os.path.abspath(args.print_pdf)
+        if not os.path.isfile(pdf_file):
+            print("Error: PDF file not found:", pdf_file)
+            sys.exit(1)
+        if not pdf_file.lower().endswith(".pdf"):
+            print("Error: --print-pdf expects a .pdf file:", pdf_file)
+            sys.exit(1)
+        if args.print_epson:
+            to_print = pdf_file
+            if args.print_epson_rotate_180:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
+                    to_print = tf.name
+                shutil.copy2(pdf_file, to_print)
+                _rotate_pdf_180(to_print)
+            _lp_epson_pdf(
+                to_print,
+                orientation=args.orientation,
+                media="A4",
+                resolution="360dpi",
+                rotate_180=False,
+            )
+            print("Sent to printer:", pdf_file)
+            if args.print_epson_rotate_180 and to_print != pdf_file:
+                try:
+                    os.unlink(to_print)
+                except Exception:
+                    pass
+        else:
+            print("Use --print-epson to send to Epson. PDF:", pdf_file)
+        sys.exit(0)
 
     if args.pdf_only:
         log_file = os.path.abspath(args.pdf_only)
@@ -380,11 +463,22 @@ if __name__ == "__main__":
         with open(log_file, "r", encoding="utf-8") as f:
             text = f.read()
         pdf_path = os.path.splitext(log_file)[0] + ".pdf"
-        _text_to_pdf(_wrap_text_after_humidity(text, max_chars=70), pdf_path, font_path=args.font)
+        _text_to_pdf(
+            _wrap_text_after_humidity(text, max_chars=70),
+            pdf_path,
+            font_path=args.font,
+            rotate_180=args.print_epson_rotate_180,
+        )
         if os.path.isfile(pdf_path):
             print("Created:", pdf_path)
             if args.print_epson:
-                _lp_epson_pdf(pdf_path, orientation=args.orientation, media="Custom.240x80mm", resolution=None)
+                _lp_epson_pdf(
+                    pdf_path,
+                    orientation=args.orientation,
+                    media="Custom.240x90mm",
+                    resolution=None,
+                    rotate_180=False,
+                )
         sys.exit(0)
 
     if not args.image_path:
@@ -396,5 +490,6 @@ if __name__ == "__main__":
         print_to_printer=args.printer,
         print_epson=args.print_epson,
         print_epson_orientation=args.orientation,
+        print_epson_rotate_180=args.print_epson_rotate_180,
         pdf_font_path=args.font,
     )
