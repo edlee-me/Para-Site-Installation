@@ -167,13 +167,13 @@ def _rotate_pdf_180(pdf_path):
         print("PDF rotation failed: {}".format(e))
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi", rotate_180=False, wait=False):
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.240x90mm", resolution="360dpi", rotate_180=False, wait=False):
     opts = [
         "lp", "-d", "EPSON_LQ_635K",
         "-o", "fit-to-page", "-o", "media={}".format(media),
     ]
     if resolution:
-        opts.extend(["-o", "Resolution={}".format(resolution)])
+        opts.extend(["-o", "resolution={}".format(resolution)])
     if orientation and orientation.lower() == "landscape":
         opts.extend(["-o", "landscape"])
     else:
@@ -181,6 +181,11 @@ def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360d
     if rotate_180:
         opts.extend(["-o", "orientation-requested=6"])  # CUPS: 6 = reverse portrait (180 degrees)
     opts.append(pdf_path)
+    try:
+        full_cmd = " ".join(opts)
+    except Exception:
+        full_cmd = str(opts)
+    print("lp command: {}".format(full_cmd))
     if wait:
         subprocess.run(opts, check=False)
     else:
@@ -236,7 +241,7 @@ def simulate_thermal_printer(
             _lp_epson_pdf(
                 single_pdf,
                 orientation=print_epson_orientation,
-                media="A4",
+                media="Custom.240x90mm",  # match PDF size (240×90mm); use Custom.241x90mm if your PPD only has that
                 resolution="360dpi",
                 rotate_180=False,
             )
@@ -455,7 +460,7 @@ if __name__ == "__main__":
             _lp_epson_pdf(
                 to_print,
                 orientation=args.orientation,
-                media="A4",
+                media="Custom.240x90mm",
                 resolution="360dpi",
                 rotate_180=False,
                 wait=is_temp,
