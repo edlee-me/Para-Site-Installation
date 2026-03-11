@@ -53,14 +53,15 @@ def _text_to_pdf(text, pdf_path, font_path=None):
         print("PDF not created: install reportlab (pip install reportlab)")
         return
     page_w, page_h = 240 * mm, 80 * mm
-    margin = 5 * mm
+    # Same margins as night_guard_perplexity.py (left only, top/bottom/right 0)
+    side_margin = 32 * mm
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=(page_w, page_h),
-        rightMargin=margin,
-        leftMargin=margin,
-        topMargin=margin,
-        bottomMargin=margin,
+        rightMargin=0,
+        leftMargin=side_margin,
+        topMargin=0,
+        bottomMargin=0,
     )
     styles = getSampleStyleSheet()
     style = styles["Normal"]

@@ -175,7 +175,7 @@ def _rotate_pdf_180(pdf_path):
         print("PDF rotation failed: {}".format(e))
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi", rotate_180=False):
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360dpi", rotate_180=False, wait=False):
     opts = [
         "lp", "-d", "EPSON_LQ_635K",
         "-o", "fit-to-page", "-o", "media={}".format(media),
@@ -189,7 +189,10 @@ def _lp_epson_pdf(pdf_path, orientation="portrait", media="A4", resolution="360d
     if rotate_180:
         opts.extend(["-o", "orientation-requested=6"])  # CUPS: 6 = reverse portrait (180 degrees)
     opts.append(pdf_path)
-    subprocess.Popen(opts)
+    if wait:
+        subprocess.run(opts, check=False)
+    else:
+        subprocess.Popen(opts)
 
 
 def simulate_thermal_printer(
@@ -441,20 +444,23 @@ if __name__ == "__main__":
             sys.exit(1)
         if args.print_epson:
             to_print = pdf_file
+            is_temp = False
             if args.print_epson_rotate_180:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
                     to_print = tf.name
                 shutil.copy2(pdf_file, to_print)
                 _rotate_pdf_180(to_print)
+                is_temp = True
             _lp_epson_pdf(
                 to_print,
                 orientation=args.orientation,
                 media="A4",
                 resolution="360dpi",
                 rotate_180=False,
+                wait=is_temp,
             )
             print("Sent to printer:", pdf_file)
-            if args.print_epson_rotate_180 and to_print != pdf_file:
+            if is_temp and os.path.isfile(to_print):
                 try:
                     os.unlink(to_print)
                 except Exception:
