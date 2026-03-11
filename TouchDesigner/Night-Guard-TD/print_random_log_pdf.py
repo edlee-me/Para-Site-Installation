@@ -2,14 +2,55 @@
 Print a random PDF from the logs folder (e.g. Night-Guard-TD/logs).
 For use from TouchDesigner: run with project venv Python, cwd = project root.
 
-  .venv/bin/python Night-Guard-TD/print_random_log_pdf.py [--print-epson] [--printer NAME]
+  .venv/bin/python Night-Guard-TD/print_random_log_pdf.py [--print-epson] [--no-rotate-180] [--printer NAME]
 """
 
 import argparse
 import os
 import random
+import shutil
 import subprocess
 import sys
+import tempfile
+
+
+def _rotate_pdf_180(pdf_path, output_path=None):
+    """Rotate all pages of a PDF 180 degrees. Requires pypdf.
+    If output_path is None, rotate in place. Otherwise write to output_path (e.g. temp file).
+    Returns output_path or pdf_path on success, None on failure.
+    """
+    try:
+        from pypdf import PdfReader, PdfWriter
+    except ImportError:
+        print("Rotation skipped: install pypdf (pip install pypdf)", file=sys.stderr)
+        return None
+    try:
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+            writer.pages[-1].rotate(180)
+        dest = output_path if output_path else pdf_path
+        if not output_path:
+            fd, temp_path = tempfile.mkstemp(suffix=".pdf")
+            try:
+                os.close(fd)
+                with open(temp_path, "wb") as f:
+                    writer.write(f)
+                shutil.copy2(temp_path, pdf_path)
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except Exception:
+                    pass
+        else:
+            with open(dest, "wb") as f:
+                writer.write(f)
+        print("PDF rotated 180°: {}".format(dest))
+        return dest
+    except Exception as e:
+        print("PDF rotation failed: {}".format(e), file=sys.stderr)
+        return None
 
 
 def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", resolution="360dpi", printer="EPSON_LQ_635K"):
@@ -57,6 +98,19 @@ def main():
         default="A4",
         help="Media size for lp -o media=.",
     )
+    parser.add_argument(
+        "--rotate-180",
+        dest="rotate_180",
+        action="store_true",
+        default=True,
+        help="Rotate the PDF 180° before printing (default).",
+    )
+    parser.add_argument(
+        "--no-rotate-180",
+        dest="rotate_180",
+        action="store_false",
+        help="Do not rotate the PDF before printing.",
+    )
     args = parser.parse_args()
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -73,11 +127,26 @@ def main():
 
     chosen = random.choice(pdfs)
     pdf_path = os.path.join(logs_dir, chosen)
+    to_print = pdf_path
+    temp_rotated = None
+
+    if args.print_epson and args.rotate_180:
+        temp_rotated = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False).name
+        result = _rotate_pdf_180(pdf_path, output_path=temp_rotated)
+        if result:
+            to_print = result
+        else:
+            if temp_rotated and os.path.isfile(temp_rotated):
+                try:
+                    os.unlink(temp_rotated)
+                except Exception:
+                    pass
+            return 1
 
     if args.print_epson:
         try:
             _lp_epson_pdf(
-                pdf_path,
+                to_print,
                 orientation=args.orientation,
                 media=args.media,
                 resolution="360dpi",
@@ -86,7 +155,18 @@ def main():
             print("Printing: {}".format(chosen))
         except Exception as e:
             print("Error printing: {}".format(e), file=sys.stderr)
+            if temp_rotated and os.path.isfile(temp_rotated):
+                try:
+                    os.unlink(temp_rotated)
+                except Exception:
+                    pass
             return 1
+        finally:
+            if temp_rotated and os.path.isfile(temp_rotated):
+                try:
+                    os.unlink(temp_rotated)
+                except Exception:
+                    pass
     else:
         print("Selected (not printing): {}".format(pdf_path))
 

@@ -415,8 +415,16 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--print-epson-rotate-180",
+        dest="print_epson_rotate_180",
         action="store_true",
-        help="Rotate Epson print 180 degrees (upside down).",
+        default=True,
+        help="Rotate Epson print 180 degrees (default).",
+    )
+    parser.add_argument(
+        "--no-print-epson-rotate-180",
+        dest="print_epson_rotate_180",
+        action="store_false",
+        help="Do not rotate Epson print 180 degrees.",
     )
     parser.add_argument("--font", metavar="PATH", default=None, help="Path to .ttf/.otf for PDF.")
     parser.add_argument("--pdf-only", metavar="LOG_FILE", help="Create PDF from existing log file (no API call).")

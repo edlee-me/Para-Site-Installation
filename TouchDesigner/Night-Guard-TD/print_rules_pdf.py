@@ -1,9 +1,9 @@
 """
 Generate PDFs from rule_1.txt through rule_5.txt and print each to the Epson (one by one).
-Uses night_guard_perplexity.py --pdf-only with --print-epson --print-epson-rotate-180.
+Uses night_guard_perplexity.py --pdf-only with --print-epson (rotate 180° is default there).
 
 Run from project root:
-  .venv/bin/python TouchDesigner/Night-Guard-TD/print_rules_pdf.py [--no-print]
+  TouchDesigner/.venv/bin/python TouchDesigner/Night-Guard-TD/print_rules_pdf.py [--no-print]
 """
 
 import argparse
@@ -35,7 +35,8 @@ def main():
     args = parser.parse_args()
 
     project_root = os.path.abspath(args.project_root)
-    python_exe = os.path.join(project_root, ".venv", "bin", "python")
+    # Venv lives at TouchDesigner/.venv (see SETUP_NEW_MAC.md)
+    python_exe = os.path.join(project_root, "TouchDesigner", ".venv", "bin", "python")
     night_guard_script = os.path.join(project_root, "TouchDesigner", "Night-Guard-TD", "night_guard_perplexity.py")
     logs_dir = os.path.join(project_root, "TouchDesigner", "Night-Guard-TD", "logs")
     font_path = os.path.join(project_root, "TouchDesigner", "Night-Guard-TD", "AzeretMono-Variable.ttf")
@@ -50,7 +51,7 @@ def main():
         print("Error: logs dir not found:", logs_dir, file=sys.stderr)
         return 1
 
-    print_opt = [] if args.no_print else ["--print-epson", "--print-epson-rotate-180"]
+    print_opt = [] if args.no_print else ["--print-epson"]
     cmd_base = [
         python_exe,
         night_guard_script,
