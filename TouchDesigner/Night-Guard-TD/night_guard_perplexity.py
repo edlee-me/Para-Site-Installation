@@ -18,15 +18,7 @@ import sys
 import tempfile
 import time
 
-# Perplexity: pip install perplexityai (must run with the project venv Python)
-try:
-    from perplexity import Perplexity
-except ImportError:
-    print("Error: perplexityai not found. You are using: %s" % sys.executable)
-    print("Run this script with the project venv, e.g.:")
-    print("  /path/to/Para-Site-Installation/.venv/bin/python night_guard_perplexity.py <image>")
-    print("Or install in current Python: pip install perplexityai")
-    sys.exit(1)
+# Perplexity is imported only when needed (in main()), so --pdf-only and --print-pdf work without it.
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -317,6 +309,15 @@ def main(
 
     # Vision-capable model on Agent API (see https://docs.perplexity.ai/docs/agent-api/models)
     model = model or os.environ.get("PERPLEXITY_MODEL", "openai/gpt-5-mini")
+
+    try:
+        from perplexity import Perplexity
+    except ImportError:
+        print("Error: perplexityai not found. You are using: %s" % sys.executable, file=sys.stderr)
+        print("Run this script with the project venv, e.g.:", file=sys.stderr)
+        print("  /path/to/Para-Site-Installation/TouchDesigner/.venv/bin/python night_guard_perplexity.py <image>", file=sys.stderr)
+        print("Or install in current Python: pip install perplexityai", file=sys.stderr)
+        sys.exit(1)
 
     client = Perplexity(api_key=key)
 
