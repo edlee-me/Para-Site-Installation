@@ -56,10 +56,10 @@ def _rotate_pdf_180(pdf_path, output_path=None):
         return None
 
 
-def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x80mm", resolution="360dpi", printer="EPSON_LQ_635K", wait=False):
+def _lp_epson_pdf(pdf_path, orientation="portrait", media="Custom.241x90mm", resolution="360dpi", printer="EPSON_LQ_635K", wait=False):
     opts = [
         "lp", "-d", printer,
-        "-o", "fit-to-page", "-o", "media=Custom.241x80mm",
+        "-o", "fit-to-page", "-o", "media=Custom.241x90mm",
     ]
     if resolution:
         opts.extend(["-o", "resolution={}".format(resolution)])
