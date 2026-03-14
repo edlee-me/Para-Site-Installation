@@ -32,7 +32,7 @@ def _rotate_pdf_180(pdf_path, output_path=None):
         writer = PdfWriter()
         for page in reader.pages:
             writer.add_page(page)
-            writer.pages[-1].rotate(180)
+            writer.pages[-1].rotate(0)
         dest = output_path if output_path else pdf_path
         if not output_path:
             fd, temp_path = tempfile.mkstemp(suffix=".pdf")
